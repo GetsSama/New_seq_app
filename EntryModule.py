@@ -62,23 +62,31 @@ class Sequence_tools:
         return new_str
 
     @staticmethod
-    def create_mutation_dict(positions, old_letters, new_letters):
-        mutation_dict = dict()
+    def create_mutations(positions, old_letters, new_letters):
+        mutations_list = list()
         for i in range(len(positions)):
             mutation = "p." + old_letters[i] + positions[i] + new_letters[i]
-            mutation_dict[positions[i]] = mutation
-        return mutation_dict
+            mutations_list.append(mutation)
+        return mutations_list
+
+    @staticmethod
+    def create_pos_mutation(positions, old_letters, new_letters):
+        mutations_dict = dict()
+        for i in range(len(positions)):
+            mutation = "p." + old_letters[i] + positions[i] + new_letters[i]
+            mutations_dict[mutation] = positions[i]
+        return mutations_dict
 
 
 class Sequence_entity:
-    __replaced_dict = dict()
+    _replaced_dict = dict()
 
     def __init__(self, path_to_sequence_file, transcrypt_name):
         self.__original_sequence = Sequence_tools.get_sequence_str(path_to_sequence_file)
         self.__transcrypt_name = transcrypt_name
 
-    def get_sequence_by_position(self, position):
-        return self.__replaced_dict[position]
+    def get_sequence_by_mutation(self, mutation):
+        return self._replaced_dict[mutation]
 
     @property
     def original_sequence(self):
@@ -88,10 +96,10 @@ class Sequence_entity:
     def transcrypt_name(self):
         return self.__transcrypt_name
 
-    def create_replaced_dict(self, replaced_positions, new_letters):
+    def create_replaced_dict(self, replaced_positions, new_letters, mutations):
         for i in range(len(replaced_positions)):
             new_seq = Sequence_tools.replace_letter(replaced_positions[i], new_letters[i], self.__original_sequence)
-            self.__replaced_dict[replaced_positions[i]] = new_seq
+            self._replaced_dict[mutations[i]] = new_seq
 
 
 class ABL_entity:
@@ -107,7 +115,8 @@ class ABL_entity:
         self.__replaced_positions = replaced_table['position'].tolist()
         self.__replaced_letters = replaced_table['replaced_letter'].tolist()
         self.__new_letters = replaced_table['new_letter'].tolist()
-        self.__mutation_dict = Sequence_tools.create_mutation_dict(self.__replaced_positions, self.__replaced_letters, self.__new_letters)
+        self._mutations = Sequence_tools.create_mutations(self.__replaced_positions, self.__replaced_letters, self.__new_letters)
+        self.__mutation_pos_dict = Sequence_tools.create_pos_mutation(self.__replaced_positions, self.__replaced_letters, self.__new_letters)
 
     @property
     def replaced_positions(self):
@@ -125,5 +134,8 @@ class ABL_entity:
     def drug_name(self):
         return self.__drug_name
 
-    def get_mutation_by_position(self, position):
-        return self.__mutation_dict[position]
+    def get_mutations(self):
+        return self._mutations
+
+    def get_pos_by_mutation(self, mutation):
+        return self.__mutation_pos_dict[mutation]
