@@ -1,3 +1,4 @@
+import Negative_sample
 import peptide_assembly
 import EntryModule as em
 import pandas as pd
@@ -18,6 +19,8 @@ entry_data_Imatinib.sequence_path = seq
 entry_data_Imatinib.transcrypt_name = transcrypt
 entry_data_Imatinib.explorable_drug_name = drug
 
-pept = peptide_assembly.Peptides(entry_data_Imatinib)
-pept.create_peptide_tables_by_entry_data()
-pept.peptides_to_csv()
+# pept = peptide_assembly.Peptides(entry_data_Imatinib)
+# pept.create_peptide_tables_by_entry_data()
+# pept.peptides_to_csv()
+
+Negative_sample.create_negative_sample_tables(entry_data_Imatinib)

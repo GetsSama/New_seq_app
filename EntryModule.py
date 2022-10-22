@@ -3,7 +3,7 @@ import pandas as pd
 class Sequence_tools:
 
     @staticmethod
-    def get_replased_table(path_to_csv, drug):
+    def get_replaced_table(path_to_csv, drug):
         df = pd.read_csv(path_to_csv)
         # Выделяем только смену позиций для иматиниба
         right_data = pd.DataFrame(df[[' DRUG_NAME', ' AA_MUTATION']])
@@ -70,13 +70,22 @@ class Sequence_tools:
         return mutations_list
 
     @staticmethod
-    def create_pos_mutation(positions, old_letters, new_letters):
+    def create_pos_mutation(positions, mutations):
         mutations_dict = dict()
         for i in range(len(positions)):
-            mutation = "p." + old_letters[i] + positions[i] + new_letters[i]
+            mutation = mutations[i]
             mutations_dict[mutation] = positions[i]
         return mutations_dict
 
+    @staticmethod
+    def mutations_parser(mutation):
+        st = mutation[2:]
+        data = list([st[1:-1], st[0], st[-1]])
+        pos = data[0]
+        old_let = data[1]
+        new_let = data[2]
+
+        return  pos, old_let, new_let
 
 class Sequence_entity:
     _replaced_dict = dict()
@@ -104,6 +113,7 @@ class Sequence_entity:
 
 class ABL_entity:
     __default_drug_name = "Imatinib"
+    __mutation_pos_dict = None
 
     def __init__(self, path_to_ABL_csv, drug):
         if drug:
@@ -111,12 +121,11 @@ class ABL_entity:
         else:
             self.__drug_name = ABL_entity.__default_drug_name
 
-        replaced_table = Sequence_tools.get_replased_table(path_to_ABL_csv, self.__drug_name)
+        replaced_table = Sequence_tools.get_replaced_table(path_to_ABL_csv, self.__drug_name)
         self.__replaced_positions = replaced_table['position'].tolist()
         self.__replaced_letters = replaced_table['replaced_letter'].tolist()
         self.__new_letters = replaced_table['new_letter'].tolist()
-        self._mutations = Sequence_tools.create_mutations(self.__replaced_positions, self.__replaced_letters, self.__new_letters)
-        self.__mutation_pos_dict = Sequence_tools.create_pos_mutation(self.__replaced_positions, self.__replaced_letters, self.__new_letters)
+        self.__mutations = Sequence_tools.create_mutations(self.__replaced_positions, self.__replaced_letters, self.__new_letters)
 
     @property
     def replaced_positions(self):
@@ -134,11 +143,27 @@ class ABL_entity:
     def drug_name(self):
         return self.__drug_name
 
-    def get_mutations(self):
-        return self._mutations
+    @property
+    def mutations(self):
+        return self.__mutations
 
     def get_pos_by_mutation(self, mutation):
+        if self.__mutation_pos_dict is None:
+            self.__mutation_pos_dict = Sequence_tools.create_pos_mutation(self.__replaced_positions, self.__mutations)
         return self.__mutation_pos_dict[mutation]
+
+    def remove_mutations(self, removed_mutations):
+        for mutation in removed_mutations:
+            pos, old_let, new_let = Sequence_tools.mutations_parser(mutation)
+            try:
+                self.__mutations.remove(mutation)
+                self.__replaced_positions.remove(pos)
+                self.__replaced_letters.remove(old_let)
+                self.__new_letters.remove(new_let)
+            except ValueError:
+                pass
+
+        self.__mutation_pos_dict = Sequence_tools.create_pos_mutation(self.__replaced_positions, self.__mutations)
 
 
 class ABL_table_analyzer:
