@@ -139,3 +139,13 @@ class ABL_entity:
 
     def get_pos_by_mutation(self, mutation):
         return self.__mutation_pos_dict[mutation]
+
+
+class ABL_table_analyzer:
+
+    @staticmethod
+    def get_unique_values_in_column(path_to_table, column_name):
+        abl_table = pd.read_csv(path_to_table)
+        drug_column = abl_table[column_name]
+        unique_list = drug_column.unique().tolist()
+        return unique_list

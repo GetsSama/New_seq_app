@@ -12,25 +12,12 @@ abl = 'ABL.csv'
 transcrypt = 'P00519-2'
 drug = 'Imatinib'
 
-peptides = peptide_assembly.Peptides(seq, abl, transcrypt, drug)
-peptides.create_peptide_tables()
-peptides.peptides_to_csv()
+entry_data_Imatinib = peptide_assembly.Entry_data()
+entry_data_Imatinib.abl_path = abl
+entry_data_Imatinib.sequence_path = seq
+entry_data_Imatinib.transcrypt_name = transcrypt
+entry_data_Imatinib.explorable_drug_name = drug
 
-# df = em.Sequence_tools.get_replased_table(abl, drug)
-# replace = list()
-# # for row in df.iterrows():
-# #     row_ser = row[1]
-# #     print(row_ser['replaced_letter'] + row_ser['position'] + row_ser['new_letter'])
-#
-# entity = em.ABL_entity(abl, drug)
-# replace = entity.get_mutations()
-# seq_entity = em.Sequence_entity(seq, transcrypt)
-#
-# for pair in replace:
-#     print(pair)
-#
-# seq_entity.create_replaced_dict(entity.replaced_positions, entity.replaced_letters, replace)
-# replace = seq_entity._replaced_dict
-#
-# for pair in replace.items():
-#     print(pair)
+pept = peptide_assembly.Peptides(entry_data_Imatinib)
+pept.create_peptide_tables_by_entry_data()
+pept.peptides_to_csv()
