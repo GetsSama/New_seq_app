@@ -138,7 +138,7 @@ class Mutations_data_source(metaclass=ABCMeta):
 class Mutations_data_factory:
     @staticmethod
     def create_mutations_data_source(table_pattern):
-        if table_pattern == "AnyGene":
+
 
 class Mutations_ABL(Mutations_data_source):
     __default_drug_name = "Imatinib"
