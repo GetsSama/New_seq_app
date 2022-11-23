@@ -67,8 +67,8 @@ class Peptides:
     def __parse_entry_data(self):
         entry_data = self.__this_entry_data
         self.__sequence = em.Sequence_entity(entry_data.sequence_path, entry_data.transcrypt_name)
-        self.__abl_data = em.Mutations_ABL(entry_data.abl_path, entry_data.explorable_drug_name)
-        self.__sequence.create_replaced_dict(self.__abl_data.get_mutations)
+        self.__abl_data = em._Mutations_ABL(entry_data.abl_path, entry_data.explorable_drug_name)
+        self.__sequence.create_replaced_dict(self.__abl_data.get_drug_and_mutations_dict)
 
     def create_peptide_tables_by_entry_data(self):
         self.__parse_entry_data()
@@ -76,7 +76,7 @@ class Peptides:
             drug = self.__abl_data.drug_name
             transcrypt = self.__sequence.transcrypt_name
 
-            for mutation in self.__abl_data.get_mutations:
+            for mutation in self.__abl_data.get_drug_and_mutations_dict:
                 left_part = ""
                 right_part = ""
                 pos = int(self.__abl_data.get_pos_by_mutation(mutation))
@@ -101,7 +101,7 @@ class Peptides:
         drug = abl_inst.drug_name
         transcrypt = sequence_inst.transcrypt_name
 
-        for mutation in abl_inst.get_mutations:
+        for mutation in abl_inst.get_drug_and_mutations_dict:
             left_part = ""
             right_part = ""
             pos = int(abl_inst.get_pos_by_mutation(mutation))

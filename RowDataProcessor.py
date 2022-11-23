@@ -132,23 +132,30 @@ class Sequence_entity:
 
 class Mutations_data_source(metaclass=ABCMeta):
     @abstractmethod
-    def get_mutations(self):
+    def get_drug_and_mutations_dict(self) -> dict:
         pass
+
 
 class Mutations_data_factory:
     @staticmethod
-    def create_mutations_data_source(table_pattern):
+    def create_mutations_data_source(path_to_source_table, table_pattern="ABL", mutation_column=" AA_MUTATION",
+                                     drug_column=" DRUG_NAME"):
+        if table_pattern == "ABL":
+            return _Mutations_ABL(path_to_source_table)
+        elif table_pattern == "AnyTable":
+            return _Mutations_any_table(path_to_source_table, mutation_column, drug_column)
+        else:
+            raise Exception("Unknown table pattern!")
 
+class _Mutations_ABL_one_drug:
+    _default_drug_name = "Imatinib"
+    _mutation_pos_dict = None
 
-class Mutations_ABL(Mutations_data_source):
-    __default_drug_name = "Imatinib"
-    __mutation_pos_dict = None
-
-    def __init__(self, path_to_ABL_csv, drug=__default_drug_name):
-        if not drug == Mutations_ABL.__default_drug_name:
+    def __init__(self, path_to_ABL_csv, drug=_default_drug_name):
+        if not drug == self._default_drug_name:
             self.__drug_name = drug
         else:
-            self.__drug_name = Mutations_ABL.__default_drug_name
+            self.__drug_name = self._default_drug_name
 
         replaced_table = _Sequence_tools.get_replaced_table_for_ABL(path_to_ABL_csv, self.__drug_name)
         self.__replaced_positions = replaced_table['position'].tolist()
@@ -192,8 +199,56 @@ class Mutations_ABL(Mutations_data_source):
                 self.__new_letters.remove(new_let)
             except ValueError:
                 pass
-
         self.__mutation_pos_dict = _Sequence_tools.create_pos_mutation(self.__replaced_positions, self.__mutations)
+
+class _Mutations_any_table(Mutations_data_source):
+
+    def __init__(self, path_to_any_table_csv, mutations_column, drug_column):
+        self.__mutations_column = mutations_column
+        self.__drug_column = drug_column
+        self.__path_to_source = path_to_any_table_csv
+
+    def get_drug_and_mutations_dict(self):
+        pass
+
+class _Mutations_ABL(Mutations_data_source):
+    def __init__(self, path_to_ABL_table_csv):
+        self.__path_to_source = path_to_ABL_table_csv
+        self.__all_drugs = Table_analyzer.get_unique_values_in_column(self.__path_to_source, " DRUG_NAME")
+        self.__res_drug_and_mutations_dict = dict()
+        self.__fill_drug_and_mutations_dict()
+
+    def get_drug_and_mutations_dict(self) -> dict:
+        return self.__res_drug_and_mutations_dict
+
+    def __fill_drug_and_mutations_dict(self):
+        for drug in self.__all_drugs:
+            for_drug = _Mutations_ABL_one_drug(self.__path_to_source, drug)
+            mutations_for_drug = for_drug.get_mutations
+            self.__res_drug_and_mutations_dict[drug] = mutations_for_drug
+
+class Drug_oriented_mutations(Mutations_data_source):
+
+    def __init__(self, mutations_data_source: Mutations_data_source):
+        self.__data_source = mutations_data_source
+        self.__row_drug_and_mutations_dict = self.__data_source.get_drug_and_mutations_dict()
+        self.__decorated_dict = dict()
+        self.__concrete_drug = None
+
+    def set_drug(self, drug):
+        self.__concrete_drug = drug
+
+    def most_freq_drug(self):
+        max_count = 0
+        most_freq = ""
+        for pair in self.__row_drug_and_mutations_dict.items():
+            if len(pair[1]) > max_count:
+                max_count = len(pair[1])
+                most_freq = pair[0]
+        return most_freq
+
+    def get_drug_and_mutations_dict(self) -> dict:
+        pass
 
 
 class Table_analyzer:
