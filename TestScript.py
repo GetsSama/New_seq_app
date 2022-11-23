@@ -11,5 +11,9 @@ test_dict = abl.get_drug_and_mutations_dict()
 for pair in test_dict.items():
     print(pair)
 
-freq_drug = RowDataProcessor.Drug_oriented_mutations(abl).most_freq_drug()
-print(freq_drug)
+print("---------------------------------------------------")
+oriented_abl = RowDataProcessor.Drug_oriented_mutations(abl)
+test_dict2 = oriented_abl.get_drug_and_mutations_dict()
+
+for pair in test_dict2.items():
+    print(pair)

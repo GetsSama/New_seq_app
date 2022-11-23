@@ -238,7 +238,7 @@ class Drug_oriented_mutations(Mutations_data_source):
     def set_drug(self, drug):
         self.__concrete_drug = drug
 
-    def most_freq_drug(self):
+    def _most_freq_drug(self):
         max_count = 0
         most_freq = ""
         for pair in self.__row_drug_and_mutations_dict.items():
@@ -247,8 +247,27 @@ class Drug_oriented_mutations(Mutations_data_source):
                 most_freq = pair[0]
         return most_freq
 
+    def _orient_row_data_to_drug(self):
+        if self.__concrete_drug is not None:
+            concrete_drug_mutations = self.__row_drug_and_mutations_dict[self.__concrete_drug]
+        else:
+            self.__concrete_drug = self._most_freq_drug()
+            concrete_drug_mutations = self.__row_drug_and_mutations_dict[self.__concrete_drug]
+
+        for pair in self.__row_drug_and_mutations_dict.items():
+            if pair[0] == self.__concrete_drug:
+                self.__decorated_dict[self.__concrete_drug] = concrete_drug_mutations
+            else:
+                unique_mutations = list()
+                for mutate in pair[1]:
+                    if concrete_drug_mutations.count(mutate) == 0:
+                        unique_mutations.append(mutate)
+                self.__decorated_dict[pair[0]] = unique_mutations
+
     def get_drug_and_mutations_dict(self) -> dict:
-        pass
+        if len(self.__decorated_dict) == 0:
+            self._orient_row_data_to_drug()
+        return self.__decorated_dict
 
 
 class Table_analyzer:
