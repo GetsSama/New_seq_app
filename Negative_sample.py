@@ -1,5 +1,5 @@
 import RowDataProcessor as em
-import peptide_assembly as pept
+import PeptideAssembly as pept
 
 
 class __Sequence_and_ABL_data:
@@ -20,7 +20,7 @@ class __Sequence_and_ABL_data:
 
 
 def create_negative_sample_tables(entry_data, file_name="negative_pept", out_dir="out"):
-    all_drugs = em.Table_analyzer.get_unique_values_in_column(entry_data.abl_path, ' DRUG_NAME')
+    all_drugs = em.Row_data_utils.get_unique_values_in_column(entry_data.abl_path, ' DRUG_NAME')
     all_drugs.remove(entry_data.explorable_drug_name)
 
     drugs_data = dict()
@@ -43,5 +43,5 @@ def create_negative_sample_tables(entry_data, file_name="negative_pept", out_dir
 
     negative_peptides = pept.Peptides()
     for negative_drug in drugs_data.values():
-        negative_peptides.create_peptide_tables(negative_drug.abl_entity, negative_drug.sequence_entity)
+        negative_peptides.convert_to_peptide_tables()
     negative_peptides.peptides_to_csv(file_name, out_dir)

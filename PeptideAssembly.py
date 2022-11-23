@@ -52,35 +52,28 @@ class Entry_data:
         self.__drug = name
 
 
-class Peptides:
+class Peptides_creator:
 
-    def __init__(self, entry_data=None):
-        self.__pept_tables = list()
-        self.__is_tables_created = False
-
+    def __init__(self):
+        self._pept_tables = list()
+        self._flag = False
         for i in range(15):
-            self.__pept_tables.append(list())
+            self._pept_tables.append(list())
 
-        if entry_data is not None:
-            self.__this_entry_data = entry_data
+    def convert_to_peptide_tables(self, sequence_source: em.Sequence_entity, mutations_source: em.Mutations_data_source):
+        drug_and_mutation_dict = mutations_source.get_drug_and_mutations_dict()
 
-    def __parse_entry_data(self):
-        entry_data = self.__this_entry_data
-        self.__sequence = em.Sequence_entity(entry_data.sequence_path, entry_data.transcrypt_name)
-        self.__abl_data = em._Mutations_ABL(entry_data.abl_path, entry_data.explorable_drug_name)
-        self.__sequence.create_replaced_dict(self.__abl_data.get_drug_and_mutations_dict)
+        for drug_and_mutate in drug_and_mutation_dict.items():
+            drug = drug_and_mutate[0]
+            transcrypt = sequence_source.transcrypt_name
+            mutations = drug_and_mutate[1]
+            sequence_source.add_mutations_to_sequence_mapping(mutations)
 
-    def create_peptide_tables_by_entry_data(self):
-        self.__parse_entry_data()
-        if not self.__is_tables_created:
-            drug = self.__abl_data.drug_name
-            transcrypt = self.__sequence.transcrypt_name
-
-            for mutation in self.__abl_data.get_drug_and_mutations_dict:
+            for mutation in mutations:
                 left_part = ""
                 right_part = ""
-                pos = int(self.__abl_data.get_pos_by_mutation(mutation))
-                sequence_one_str = self.__sequence.get_sequence_by_mutation(mutation)
+                pos = em.Row_data_utils.get_position_by_mutation(mutation)
+                sequence_one_str = sequence_source.get_sequence_by_mutation(mutation)
                 peptide = sequence_one_str[pos - 1]
                 seq_len = len(sequence_one_str)
 
@@ -93,41 +86,16 @@ class Peptides:
                     left_part = sequence_one_str[pos - 1 - i]
                     right_part = sequence_one_str[pos - 1 + i]
                     peptide = left_part + peptide + right_part
-                    self.__pept_tables[i - 1].append(list([peptide, drug, mutation, transcrypt]))
+                    self._pept_tables[i - 1].append(list([peptide, drug, mutation, transcrypt]))
 
-                self.__is_tables_created = True
-
-    def create_peptide_tables(self, abl_inst, sequence_inst):
-        drug = abl_inst.drug_name
-        transcrypt = sequence_inst.transcrypt_name
-
-        for mutation in abl_inst.get_drug_and_mutations_dict:
-            left_part = ""
-            right_part = ""
-            pos = int(abl_inst.get_pos_by_mutation(mutation))
-            sequence_one_str = sequence_inst.get_sequence_by_mutation(mutation)
-            peptide = sequence_one_str[pos - 1]
-            seq_len = len(sequence_one_str)
-
-            if pos <= 15 or (pos + 15) > seq_len:
-                continue
-
-            # counter += 1
-
-            for i in range(1, 16):
-                left_part = sequence_one_str[pos - 1 - i]
-                right_part = sequence_one_str[pos - 1 + i]
-                peptide = left_part + peptide + right_part
-                self.__pept_tables[i - 1].append(list([peptide, drug, mutation, transcrypt]))
-
-            self.__is_tables_created = True
+        self._flag = True
 
     def peptides_to_csv(self, files_name, out_dir="out"):
 
-        if self.__is_tables_created:
+        if self._flag:
             df_list = list()
 
-            for table in self.__pept_tables:
+            for table in self._pept_tables:
                 df = pd.DataFrame(table, columns=['PEPTIDE', 'DRUG_NAME', 'AA_MUTATION', 'TRANSCRYPT'])
                 df.index.name = 'NUMBERS'
                 df_list.append(df)
@@ -145,4 +113,4 @@ class Peptides:
 
     @property
     def peptide_tables(self):
-        return self.__pept_tables
+        return self._pept_tables

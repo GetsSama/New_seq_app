@@ -106,7 +106,7 @@ class Sequence_entity:
 
     def __init__(self, path_to_sequence_file, transcrypt_name):
         self.__original_sequence = _Sequence_tools.get_sequence_one_str(path_to_sequence_file)
-        self.__transcrypt_name = transcrypt_name
+        self._transcrypt_name = transcrypt_name
 
     def get_sequence_by_mutation(self, mutation):
         return self._replaced_dict[mutation]
@@ -117,13 +117,12 @@ class Sequence_entity:
 
     @property
     def transcrypt_name(self):
-        return self.__transcrypt_name
+        return self._transcrypt_name
 
-    @property
-    def get_mutation_and_sequence_mapping(self):
+    def get_mutation_to_sequence_mapping(self):
         return self._replaced_dict
 
-    def create_replaced_dict(self, mutations):
+    def add_mutations_to_sequence_mapping(self, mutations):
         for mutation in mutations:
             replaced_position, old_letter, new_letter = _Sequence_tools.mutations_parser(mutation)
             new_seq = _Sequence_tools.replace_letter(replaced_position, new_letter, self.__original_sequence)
@@ -214,7 +213,7 @@ class _Mutations_any_table(Mutations_data_source):
 class _Mutations_ABL(Mutations_data_source):
     def __init__(self, path_to_ABL_table_csv):
         self.__path_to_source = path_to_ABL_table_csv
-        self.__all_drugs = Table_analyzer.get_unique_values_in_column(self.__path_to_source, " DRUG_NAME")
+        self.__all_drugs = Row_data_utils.get_unique_values_in_column(self.__path_to_source, " DRUG_NAME")
         self.__res_drug_and_mutations_dict = dict()
         self.__fill_drug_and_mutations_dict()
 
@@ -270,7 +269,7 @@ class Drug_oriented_mutations(Mutations_data_source):
         return self.__decorated_dict
 
 
-class Table_analyzer:
+class Row_data_utils:
 
     @staticmethod
     def get_unique_values_in_column(path_to_table, column_name):
@@ -278,3 +277,8 @@ class Table_analyzer:
         any_column = any_table[column_name]
         unique_list = any_column.unique().tolist()
         return unique_list
+
+    @staticmethod
+    def get_position_by_mutation(mutation) -> int:
+        pos, old, new = _Sequence_tools.mutations_parser(mutation)
+        return int(pos)

@@ -1,29 +1,22 @@
 import os
 
 import Converter
-import peptide_assembly as ps
+import PeptideAssembly as ps
 import Negative_sample as ns
 
 
 work_dir = "source_data"
 seq_main_result = "peptides_source"
-seq_negative_result = "negative_sample"
 main_pept_result_file_name = "pept_"
-negative_sample_file_name = "neg_sam_"
 
 out_sdf_pept = "sdf_peptide_result"
-out_sdf_negative_sample = "sdf_negative_result"
 
 if not os.path.exists(work_dir):
     os.mkdir(work_dir)
     os.mkdir(work_dir + "/" + seq_main_result)
-    os.mkdir(work_dir + "/" + seq_negative_result)
 
 if not os.path.exists(out_sdf_pept):
     os.mkdir(out_sdf_pept)
-
-if not os.path.exists(out_sdf_negative_sample):
-    os.mkdir(out_sdf_negative_sample)
 
 
 def create_peptides():
@@ -47,8 +40,8 @@ def create_peptides():
     sequence_data.transcrypt_name = str(input("Entry transcrypt name...\n"))
     sequence_data.explorable_drug_name = str(input("Entry drug name...\n"))
 
-    peptides = ps.Peptides(sequence_data)
-    peptides.create_peptide_tables_by_entry_data()
+    peptides = ps.Peptides()
+    peptides.convert_to_peptide_tables()
     peptides.peptides_to_csv(main_pept_result_file_name, work_dir + "/" + seq_main_result)
 
     ns.create_negative_sample_tables(sequence_data, negative_sample_file_name, work_dir + "/" + seq_negative_result)
