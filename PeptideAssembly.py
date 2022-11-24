@@ -90,7 +90,7 @@ class Peptides_creator:
 
         self._flag = True
 
-    def peptides_to_csv(self, files_name, out_dir="out"):
+    def peptides_to_csv(self, files_name_prefix, out_dir="out"):
 
         if self._flag:
             df_list = list()
@@ -104,7 +104,10 @@ class Peptides_creator:
                 os.mkdir(out_dir)
 
             for i in range(len(df_list)):
-                name = out_dir + "/" + files_name + str(i + 1) + ".csv"
+                finish_dir = out_dir + "/" + files_name_prefix + str(i + 1)
+                if not os.path.exists(finish_dir):
+                    os.mkdir(finish_dir)
+                name = out_dir + "/" + files_name_prefix + str(i + 1) + "/" + files_name_prefix + str(i + 1) + ".csv"
                 df_list[i].to_csv(name)
                 print("---> Create new file: " + str(name))
 

@@ -40,6 +40,7 @@ class SeqToSDF_manager:
         input_property = self._path_to_peptides + peptide_file_name
         self._prop_dict["input"] = input_property
         self._prop_dict["output"] = self._path_to_peptides + "/" + self._file_name_prefix + str(number)
+        self._prop_dict["filename"] = self._file_name_prefix + str(number) + "_sdf"
         new_json = json.dumps(self._prop_dict)
 
         with open(self._path_to_config, 'w') as config:

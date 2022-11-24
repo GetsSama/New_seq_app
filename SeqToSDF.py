@@ -65,9 +65,12 @@ def chargePeptide(mol):
             mol.GetAtomWithIdx(atoms_pos[3]).SetFormalCharge(1)
 
 def write(proc, partition, output, sequence_column, isCharged, alphabet, output_filename):
-    out = os.path.join(output, output_filename + "_thread_" + str(proc) + ".sdf")
-    log = os.path.join(output, output_filename + "_thread_" + str(proc) + "_log" + ".txt")
-    fail = os.path.join(output, output_filename + "_thread_" + str(proc) + "_failed" + ".txt")
+    out_logs = output + "/logs"
+    if not os.path.exists(out_logs):
+        os.mkdir(out_logs)
+    out = os.path.join(out_logs, output_filename + "_thread_" + str(proc) + ".sdf")
+    log = os.path.join(out_logs, output_filename + "_thread_" + str(proc) + "_log" + ".txt")
+    fail = os.path.join(out_logs, output_filename + "_thread_" + str(proc) + "_failed" + ".txt")
     try:
         with open(out, "w", encoding="utf-8") as o, open(log, "w", encoding="utf-8") as l, open(fail, "w", encoding="utf-8") as f:
             l.write("Start thread #" + str(proc) + " " + str(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())) + '\n' + "-------------------------------------------------\n")
@@ -204,15 +207,19 @@ def start_fun(configuration):
                 p.join()
 
             # Merge all
+            out_logs = output + "/logs/"
 
             sdf = os.path.join(output, output_filename + ".sdf")
-            total_log = os.path.join(output, output_filename + "_log" + ".txt")
-            total_fail = os.path.join(output, output_filename + "_failed" + ".txt")
+            total_log = os.path.join(out_logs, output_filename + "_log" + ".txt")
+            total_fail = os.path.join(out_logs, output_filename + "_failed" + ".txt")
             with open(sdf, "w", encoding="utf-8") as final, open(total_log, "w", encoding="utf-8") as log, open(total_fail, "w",encoding="utf-8") as failed:
                 for i in range(number_threads):
-                    out_t = os.path.join(output, output_filename + "_thread_" + str(i) + ".sdf")
-                    log_t = os.path.join(output, output_filename + "_thread_" + str(i) + "_log" + ".txt")
-                    fail_t = os.path.join(output, output_filename + "_thread_" + str(i) + "_failed" + ".txt")
+                    out_t = os.path.join(out_logs, output_filename + "_thread_" + str(i) + ".sdf")
+                    #os.mkdir(out_logs + output_filename + "_thread_" + str(i) + ".sdf")
+                    log_t = os.path.join(out_logs, output_filename + "_thread_" + str(i) + "_log" + ".txt")
+                    #os.mkdir(out_logs + output_filename + "_thread_" + str(i) + "_log" + ".txt")
+                    fail_t = os.path.join(out_logs, output_filename + "_thread_" + str(i) + "_failed" + ".txt")
+                    #os.mkdir(out_logs + output_filename + "_thread_" + str(i) + "_failed" + ".txt")
                     with open(out_t, "r", encoding="utf-8") as o, open(log_t, "r", encoding="utf-8") as l, open(fail_t, "r", encoding="utf-8") as f:
                         final.write("".join(o.readlines()))
                         log.write("".join(l.readlines()))
