@@ -51,6 +51,47 @@ class _Sequence_tools:
         return df_uni_commands
 
     @staticmethod
+    def get_replaced_table_for_any(path_to_csv, drug_column, mutations_column, drug_name):
+        df = pd.read_csv(path_to_csv)
+        # Выделяем только смену позиций
+        right_data = pd.DataFrame(df[[drug_column, mutations_column]])
+        filter_name = right_data[drug_column] == drug_name
+        data_imat = right_data.loc[filter_name]
+        replace_mass = data_imat[mutations_column]
+        # Оставляем только сами АК и позиции
+        command_mass = []
+
+        for st in replace_mass:
+            command_mass.append(st[2:])
+
+        # print(command_mass)
+
+        # Оставляем только замененные АК
+        count = 0
+        for st in command_mass:
+            for let in st[1:]:
+                if not let.isdigit():
+                    count += 1
+            if count > 1:
+                command_mass.remove(st)
+            count = 0
+
+        for st in command_mass:
+            if st == '?':
+                command_mass.remove(st)
+
+        # Создаем таблицу с уникальными значениями
+        unique_mass = pd.DataFrame(command_mass)[0].unique()
+
+        unique_comm_table = []
+        for st in unique_mass:
+            unique_comm_table.append(list([st[1:-1], st[0], st[-1]]))
+
+        df_uni_commands = pd.DataFrame(unique_comm_table, columns=['position', 'replaced_letter',
+                                                                   'new_letter'])  # Позиция, заменяемая буква, заменяющая буква
+        return df_uni_commands
+
+    @staticmethod
     def get_sequence_one_str(path_to_sequence):
         with open(path_to_sequence, 'r') as source_data:
             lines = source_data.readlines()
@@ -137,8 +178,8 @@ class Mutations_data_source(metaclass=ABCMeta):
 
 class Mutations_data_factory:
     @staticmethod
-    def create_mutations_data_source(path_to_source_table, table_pattern="ABL", mutation_column=" AA_MUTATION",
-                                     drug_column=" DRUG_NAME"):
+    def create_mutations_data_source(path_to_source_table, table_pattern="ABL", mutation_column="default",
+                                     drug_column="default"):
         if table_pattern == "ABL":
             return _Mutations_ABL(path_to_source_table)
         elif table_pattern == "AnyTable":
@@ -206,9 +247,25 @@ class _Mutations_any_table(Mutations_data_source):
         self.__mutations_column = mutations_column
         self.__drug_column = drug_column
         self.__path_to_source = path_to_any_table_csv
+        self._drug_and_mutations_dict = dict()
 
-    def get_drug_and_mutations_dict(self):
-        pass
+    def with_drug_parser(self):
+        list_uni_drugs = Row_data_utils.get_unique_values_in_column(self.__path_to_source, self.__drug_column)
+        for drug in list_uni_drugs:
+            replaced_table = _Sequence_tools.get_replaced_table_for_any(self.__path_to_source, self.__drug_column, self.__mutations_column, drug)
+            mutations = _Sequence_tools.create_mutations(replaced_table['positions'], replaced_table['replaced_letter'], replaced_table['new_letter'])
+            self._drug_and_mutations_dict[drug] = mutations
+
+    def no_drug_parser(self):
+        list_mutations = pd.read_csv(self.__path_to_source)[self.__mutations_column]
+        self._drug_and_mutations_dict["No drug"] = list_mutations
+
+    def get_drug_and_mutations_dict(self) -> dict:
+        if self.__drug_column == "default":
+            self.no_drug_parser()
+        else:
+            self.with_drug_parser()
+        return self._drug_and_mutations_dict
 
 class _Mutations_ABL(Mutations_data_source):
     def __init__(self, path_to_ABL_table_csv):
