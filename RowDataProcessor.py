@@ -172,7 +172,7 @@ class Sequence_entity:
 
 class Mutations_data_source(metaclass=ABCMeta):
     @abstractmethod
-    def get_drug_and_mutations_dict(self) -> dict:
+    def get_drug_and_mutations_dict(self) -> dict[str, set]:
         pass
 
 
@@ -255,12 +255,15 @@ class _Mutations_any_table(Mutations_data_source):
             replaced_table = _Sequence_tools.get_replaced_table_for_any(self.__path_to_source, self.__drug_column, self.__mutations_column, drug)
             mutations = _Sequence_tools.create_mutations(replaced_table['positions'], replaced_table['replaced_letter'], replaced_table['new_letter'])
             self._drug_and_mutations_dict[drug] = mutations
+        Row_data_utils.map_to_dict_of_sets(self._drug_and_mutations_dict)
 
     def no_drug_parser(self):
-        list_mutations = pd.read_csv(self.__path_to_source)[self.__mutations_column]
-        self._drug_and_mutations_dict["No drug"] = list_mutations
+        list_mutations = pd.read_csv(self.__path_to_source, sep=";")
+        list_mutations = list_mutations[self.__mutations_column]
+        self._drug_and_mutations_dict["No drug"] = list_mutations.tolist()
+        Row_data_utils.map_to_dict_of_sets(self._drug_and_mutations_dict)
 
-    def get_drug_and_mutations_dict(self) -> dict:
+    def get_drug_and_mutations_dict(self) -> dict[str, set]:
         if self.__drug_column == "default":
             self.no_drug_parser()
         else:
@@ -274,7 +277,7 @@ class _Mutations_ABL(Mutations_data_source):
         self.__res_drug_and_mutations_dict = dict()
         self.__fill_drug_and_mutations_dict()
 
-    def get_drug_and_mutations_dict(self) -> dict:
+    def get_drug_and_mutations_dict(self) -> dict[str, set]:
         return self.__res_drug_and_mutations_dict
 
     def __fill_drug_and_mutations_dict(self):
@@ -282,6 +285,7 @@ class _Mutations_ABL(Mutations_data_source):
             for_drug = _Mutations_ABL_one_drug(self.__path_to_source, drug)
             mutations_for_drug = for_drug.get_mutations
             self.__res_drug_and_mutations_dict[drug] = mutations_for_drug
+        Row_data_utils.map_to_dict_of_sets(self.__res_drug_and_mutations_dict)
 
 class Drug_oriented_mutations(Mutations_data_source):
 
@@ -314,13 +318,14 @@ class Drug_oriented_mutations(Mutations_data_source):
             if pair[0] == self.__concrete_drug:
                 self.__decorated_dict[self.__concrete_drug] = concrete_drug_mutations
             else:
-                unique_mutations = list()
+                unique_mutations = set()
                 for mutate in pair[1]:
-                    if concrete_drug_mutations.count(mutate) == 0:
-                        unique_mutations.append(mutate)
+                    if mutate not in concrete_drug_mutations:
+                        unique_mutations.add(mutate)
                 self.__decorated_dict[pair[0]] = unique_mutations
+        Row_data_utils.map_to_dict_of_sets(self.__decorated_dict)
 
-    def get_drug_and_mutations_dict(self) -> dict:
+    def get_drug_and_mutations_dict(self) -> dict[str, set]:
         if len(self.__decorated_dict) == 0:
             self._orient_row_data_to_drug()
         return self.__decorated_dict
@@ -339,3 +344,27 @@ class Row_data_utils:
     def get_position_by_mutation(mutation) -> int:
         pos, old, new = _Sequence_tools.mutations_parser(mutation)
         return int(pos)
+
+    @staticmethod
+    def concatenate_drug_and_mutations_dicts(dict1: dict, dict2: dict) -> dict[str, set]:
+        Row_data_utils.map_to_dict_of_sets(dict1)
+        Row_data_utils.map_to_dict_of_sets(dict2)
+
+        res_dict = dict1.copy()
+        for key in dict2.keys():
+            if key in res_dict.keys():
+                res_dict[key].union(dict2[key])
+            else:
+                res_dict[key] = dict2[key]
+
+        return res_dict
+
+    @staticmethod
+    def map_to_dict_of_sets(_dict_: dict) -> dict[str, set]:
+        for _key in _dict_.keys():
+            values = _dict_[_key]
+            val_set = set(values)
+            _dict_[_key] = val_set
+        return _dict_
+
+

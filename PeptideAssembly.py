@@ -60,9 +60,7 @@ class Peptides_creator:
         for i in range(15):
             self._pept_tables.append(list())
 
-    def convert_to_peptide_tables(self, sequence_source: em.Sequence_entity, mutations_source: em.Mutations_data_source):
-        drug_and_mutation_dict = mutations_source.get_drug_and_mutations_dict()
-
+    def convert_to_peptide_tables(self, sequence_source: em.Sequence_entity, drug_and_mutation_dict: dict[str, set]):
         for drug_and_mutate in drug_and_mutation_dict.items():
             drug = drug_and_mutate[0]
             transcrypt = sequence_source.transcrypt_name
