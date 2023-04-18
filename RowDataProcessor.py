@@ -1,6 +1,7 @@
 from abc import abstractmethod, ABCMeta
 
 import pandas as pd
+import re
 
 """
     Utility class for work module API
@@ -8,6 +9,12 @@ import pandas as pd
 
 
 class _Sequence_tools:
+    __mutation_pattern = re.compile('p\.[A-Z]\d+[A-Z]')
+
+    @staticmethod
+    def check_correct_mutation_pattern(mutation) -> bool:
+        result = _Sequence_tools.__mutation_pattern.fullmatch(mutation)
+        return result is not None
 
     @staticmethod
     def get_replaced_table_for_ABL(path_to_csv, drug):
@@ -260,7 +267,15 @@ class _Mutations_any_table(Mutations_data_source):
     def no_drug_parser(self):
         list_mutations = pd.read_csv(self.__path_to_source, sep=";")
         list_mutations = list_mutations[self.__mutations_column]
-        self._drug_and_mutations_dict["No drug"] = list_mutations.tolist()
+        list_mutations = list_mutations.unique()
+        list_mutations = list_mutations.tolist()
+
+        correct_mutations = list()
+        for mutation in list_mutations:
+            if _Sequence_tools.check_correct_mutation_pattern(mutation):
+                correct_mutations.append(mutation)
+
+        self._drug_and_mutations_dict["No drug"] = correct_mutations
         Row_data_utils.map_to_dict_of_sets(self._drug_and_mutations_dict)
 
     def get_drug_and_mutations_dict(self) -> dict[str, set]:
