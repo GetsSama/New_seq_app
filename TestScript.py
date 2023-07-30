@@ -4,13 +4,13 @@ import Converter as conv
 import os
 import pandas as pd
 
-path_abl = "C:\\Users\\Zh_Nikolay\\Desktop\\Sources\\ABL1_1.csv"
-path_seq = "C:\\Users\\Zh_Nikolay\\Desktop\\Sources\\P00519-1.fasta.txt"
+path_abl = "C:\\Users\\Zh_Nikolay\\Desktop\\Sources\\ABL_2.csv"
+path_seq = "C:\\Users\\Zh_Nikolay\\Desktop\\Sources\\P00519-2.fasta.txt"
 out_dir = "out"
 path_config = "config/1000.json"
 pept_name_prefix = "peptides_"
 path_dop = "C:\\Users\\Zh_Nikolay\\Desktop\\Sources\\ABL_Gene_mutations.csv"
-transcrypt = "ABL"
+transcrypt = "P00519-2"
 
 
 def peptides():
@@ -86,10 +86,10 @@ def get_differences_on_mutation(path_to_comparable_csv: str, mutations_column_na
     df_out.index.name = 'NUMBERS'
     df_out.to_csv(out_dir + "\\differences.csv")
 
-def create_olmpass_command_files(gene_name: str):
+def create_olmpass_command_file(gene_name: str, fromMNA: int = 1, toMNA: int = 15):
     task_file_content = ""
     abs_out_path = os.path.abspath(out_dir)
-    for i in range(3, 16):
+    for i in range(fromMNA, toMNA + 1):
         for j in range(1, 16):
             first_row = "BaseCreate=" + str(i) + ";" + gene_name + "_descript_" + str(i) + "_pept_len_" + str(j) + "\n"
             second_row = ""
@@ -99,15 +99,19 @@ def create_olmpass_command_files(gene_name: str):
 
         # if not os.path.exists(task_file_path):
         #     os.mkdir(task_file_path)
-    task_file_path = abs_out_path + "\\task" + ".txt"
+    task_file_path = abs_out_path + "\\task_" + gene_name + ".txt"
     with open(task_file_path, "w") as task_file:
         task_file.write(task_file_content)
     #print(task_file_content)
 
+def create_group_of_olmpass_command_files(gene_names: list[str], fromMNA: int = 1, toMNA: int = 15):
+    for gene in gene_names:
+        create_olmpass_command_file(gene, fromMNA, toMNA)
 
 if __name__ == '__main__':
     #any_test()
-    get_differences_on_mutation("C:\\Users\\Zh_Nikolay\\Desktop\\Sources\\GnomAD_extra.csv", "Ptein")
+    #get_differences_on_mutation("C:\\Users\\Zh_Nikolay\\Desktop\\Sources\\GnomAD_extra.csv", "Ptein")
     #peptides()
-    convert()
-    create_olmpass_command_files("ABL")
+    #convert()
+    #create_olmpass_command_file("ABL2")
+    create_group_of_olmpass_command_files(["ALK", "EGFR", "KIT", "MAP2K1", "SMO"], 1, 2)

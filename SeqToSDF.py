@@ -64,7 +64,7 @@ def chargePeptide(mol):
             atoms_pos = list(g)
             mol.GetAtomWithIdx(atoms_pos[3]).SetFormalCharge(1)
 
-def write(proc, partition, output, sequence_column, isCharged, alphabet, output_filename):
+def write(proc, partition, output, sequence_column, mutation_column, isCharged, alphabet, output_filename):
     out_logs = output + "/logs"
     if not os.path.exists(out_logs):
         os.mkdir(out_logs)
@@ -96,7 +96,17 @@ def write(proc, partition, output, sequence_column, isCharged, alphabet, output_
                         # o.write(Chem.MolToMolBlock(molecule, forceV3000 = True)+"\n")
                         o.write(Chem.MolToMolBlock(molecule, forceV3000=True))
                         for c in partition.columns:
-                            #if c != sequence_column:
+                            if c == sequence_column:
+                                o.write(">  <" + "SEQUENCE" + ">\n")
+                                o.write(str(partition.loc[i, c]) + "\n\n")
+                                continue
+                            if c == mutation_column:
+                                o.write(">  <" + c + ">\n")
+                                o.write(str(partition.loc[i, c]) + "\n\n")
+                                o.write(">  <" + "POSITION" + ">\n")
+                                pos = str(partition.loc[i, c])[3:-1]
+                                o.write(pos + "\n\n")
+                                continue
                             o.write(">  <" + c + ">\n")
                             o.write(str(partition.loc[i, c]) + "\n\n")
                         o.write("$$$$\n")
@@ -131,7 +141,8 @@ def start_fun(configuration):
 
                 input = parameters["input"]
                 output = parameters["output"]
-                sequence_column = parameters["column"]
+                sequence_column = parameters["column_seq"]
+                mutation_column = parameters["column_mut"]
 
                 if "charged" in parameters.keys():
                     isCharged = parameters["charged"]
@@ -198,7 +209,7 @@ def start_fun(configuration):
                 else:
                     partition = table[start:start + size_part]
 
-                p = multiprocessing.Process(target=write, args=(proc, partition, output, sequence_column, isCharged, alphabet, output_filename))
+                p = multiprocessing.Process(target=write, args=(proc, partition, output, sequence_column, mutation_column, isCharged, alphabet, output_filename))
                 processes.append(p)
                 p.start()
 

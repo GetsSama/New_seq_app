@@ -1,1 +1,1 @@
-{"input": "out/peptides_15/peptides_15.csv", "output": "out/peptides_15", "column": "PEPTIDE", "charged": false, "alphabet": "protein", "threads": 4, "separator": ",", "filename": "peptides_15_sdf"}
+{"input": "out/peptides_15/peptides_15.csv", "output": "out/peptides_15", "column_seq": "PEPTIDE", "column_mut": "AA_MUTATION", "charged": false, "alphabet": "protein", "threads": 4, "separator": ",", "filename": "peptides_15_sdf"}
